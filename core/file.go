@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/pelletier/go-toml"
 )
@@ -72,6 +73,10 @@ func LoadTomlFileToMap(relativePath string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	defer func() {
+		_ = f.Close()
+	}()
+
 	fileinfo, err := f.Stat()
 	if err != nil {
 		return nil, err
@@ -84,10 +89,6 @@ func LoadTomlFileToMap(relativePath string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer func() {
-		_ = f.Close()
-	}()
 
 	loadedTree, err := toml.Load(string(buffer))
 	if err != nil {
@@ -120,7 +121,7 @@ func CreateFile(arg ArgCreateFileArgument) (*os.File, error) {
 		return nil, err
 	}
 
-	err = os.MkdirAll(absPath, os.ModePerm)
+	err = os.MkdirAll(absPath, 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -180,11 +181,14 @@ func LoadSkPkFromPemFile(relativePath string, skIndex int) ([]byte, string, erro
 
 	blockType := blkRecovered.Type
 
-	if strings.Index(blockType, pemPkHeader) != 0 {
+	if !strings.HasPrefix(blockType, pemPkHeader) {
 		return nil, "", fmt.Errorf("%w missing '%s' in block type", ErrPemFileIsInvalid, pemPkHeader)
 	}
 
 	blockTypeString := blockType[len(pemPkHeader):]
+	if !isValidPemPublicKeySuffix(blockTypeString) {
+		return nil, "", fmt.Errorf("%w invalid public key suffix in block type", ErrPemFileIsInvalid)
+	}
 
 	return blkRecovered.Bytes, blockTypeString, nil
 }
@@ -224,11 +228,14 @@ func LoadAllKeysFromPemFile(relativePath string) ([][]byte, []string, error) {
 		buff = bytes.TrimSpace(buff)
 
 		blockType := blkRecovered.Type
-		if strings.Index(blockType, pemPkHeader) != 0 {
+		if !strings.HasPrefix(blockType, pemPkHeader) {
 			return nil, nil, fmt.Errorf("%w missing '%s' in block type", ErrPemFileIsInvalid, pemPkHeader)
 		}
 
 		blockTypeString := blockType[len(pemPkHeader):]
+		if !isValidPemPublicKeySuffix(blockTypeString) {
+			return nil, nil, fmt.Errorf("%w invalid public key suffix in block type", ErrPemFileIsInvalid)
+		}
 
 		privateKeys = append(privateKeys, blkRecovered.Bytes)
 		publicKeys = append(publicKeys, blockTypeString)
@@ -237,10 +244,26 @@ func LoadAllKeysFromPemFile(relativePath string) ([][]byte, []string, error) {
 	return privateKeys, publicKeys, nil
 }
 
+func isValidPemPublicKeySuffix(suffix string) bool {
+	if suffix == "" || strings.TrimSpace(suffix) != suffix {
+		return false
+	}
+	for _, char := range suffix {
+		if unicode.IsControl(char) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // SaveSkToPemFile saves secret key bytes in the file
 func SaveSkToPemFile(file *os.File, identifier string, skBytes []byte) error {
 	if file == nil {
 		return ErrNilFile
+	}
+	if !isValidPemPublicKeySuffix(identifier) {
+		return fmt.Errorf("%w invalid identifier for PEM block type", ErrPemFileIsInvalid)
 	}
 
 	blk := pem.Block{
