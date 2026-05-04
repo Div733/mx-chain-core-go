@@ -24,9 +24,11 @@ func (t *TxJsonMarshalizer) Marshal(obj interface{}) ([]byte, error) {
 }
 
 func trimLineFeed(bytes []byte) []byte {
-	// this should be replaced, but for some reason, bytes.TrimRight(b, "\r") does not work
+	if len(bytes) == 0 {
+		return bytes
+	}
 	lastByte := bytes[len(bytes)-1:]
-	if lastByte[0] == byte(10) { // hardcoded for now
+	if lastByte[0] == byte(10) {
 		return bytes[:len(bytes)-1]
 	}
 

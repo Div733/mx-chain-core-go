@@ -2,11 +2,15 @@ package transaction
 
 import (
 	"bytes"
+	"errors"
 	"sort"
 
 	"github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/hashing"
 )
+
+// ErrInvalidAddressLength signals that the address length is invalid for XOR operation
+var ErrInvalidAddressLength = errors.New("invalid address length for XOR operation")
 
 // SortTransactionsBySenderAndNonceWithFrontRunningProtection - sorts the transactions by address and randomness source to protect from front running
 func SortTransactionsBySenderAndNonceWithFrontRunningProtection(transactions []data.TransactionHandler, hasher hashing.Hasher, randomness []byte) {
@@ -15,7 +19,10 @@ func SortTransactionsBySenderAndNonceWithFrontRunningProtection(transactions []d
 	xoredAddresses := make(map[string][]byte)
 
 	for _, tx := range transactions {
-		xoredBytes := xorBytes(tx.GetSndAddr(), randSeed)
+		xoredBytes, err := xorBytes(tx.GetSndAddr(), randSeed)
+		if err != nil {
+			continue
+		}
 		xoredAddresses[string(tx.GetSndAddr())] = hasher.Compute(string(xoredBytes))
 	}
 
@@ -45,7 +52,10 @@ func SortTransactionsBySenderAndNonceWithFrontRunningProtectionExtendedTransacti
 	for _, tx := range transactions {
 		txHandler := tx.GetTxHandler()
 
-		xoredBytes := xorBytes(txHandler.GetSndAddr(), randSeed)
+		xoredBytes, err := xorBytes(txHandler.GetSndAddr(), randSeed)
+		if err != nil {
+			continue
+		}
 		xoredAddresses[string(txHandler.GetSndAddr())] = hasher.Compute(string(xoredBytes))
 	}
 
@@ -102,11 +112,14 @@ func SortTransactionsBySenderAndNonceExtendedTransactions(transactions []data.Tx
 	sort.Slice(transactions, sorter)
 }
 
-// parameters need to be of the same len, otherwise it will panic (if second slice shorter)
-func xorBytes(a, b []byte) []byte {
+// xorBytes returns the XOR of two byte slices. Returns an error if b is shorter than a.
+func xorBytes(a, b []byte) ([]byte, error) {
+	if len(b) < len(a) {
+		return nil, ErrInvalidAddressLength
+	}
 	res := make([]byte, len(a))
 	for i := range a {
 		res[i] = a[i] ^ b[i]
 	}
-	return res
+	return res, nil
 }

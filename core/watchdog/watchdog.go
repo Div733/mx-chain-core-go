@@ -64,7 +64,11 @@ func (w *watchdog) defaultWatchdogExpiry(watchdogID string) {
 		Reason:      "alarm " + watchdogID + " has expired",
 		Description: "the " + watchdogID + " is stuck",
 	}
-	w.chanStopNodeProcess <- arg
+	select {
+	case w.chanStopNodeProcess <- arg:
+	default:
+		w.log.Error("watchdog: failed to send shutdown signal, channel blocked", "alarm", watchdogID)
+	}
 }
 
 // Stop stops the alarm with the specified ID

@@ -63,14 +63,18 @@ func (counts *ConcurrentShardedCountsWithSize) GetTotalSize() int64 {
 func (counts *ConcurrentShardedCountsWithSize) String() string {
 	var builder strings.Builder
 
-	total := counts.GetTotal()
-	totalSize := core.ConvertBytes(uint64(counts.GetTotalSize()))
-	_, _ = fmt.Fprintf(&builder, "Total:%d (%s); ", total, totalSize)
-
 	counts.mutex.RLock()
 	defer counts.mutex.RUnlock()
 
-	// First, we sort the keys alphanumerically
+	total := int64(0)
+	totalSizeBytes := int64(0)
+	for _, item := range counts.byShard {
+		total += item.counter
+		totalSizeBytes += item.sizeInBytes
+	}
+	totalSize := core.ConvertBytes(uint64(totalSizeBytes))
+	_, _ = fmt.Fprintf(&builder, "Total:%d (%s); ", total, totalSize)
+
 	keys := make([]string, 0, len(counts.byShard))
 	for key := range counts.byShard {
 		keys = append(keys, key)

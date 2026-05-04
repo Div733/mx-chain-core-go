@@ -123,16 +123,22 @@ func GetApproximatePercentageOfValue(value *big.Int, percentage float64) *big.In
 }
 
 // GetIntTrimmedPercentageOfValue returns the exact percentage of value, that fits into the integer (with loss of division remainder)
-func GetIntTrimmedPercentageOfValue(value *big.Int, percentage float64) *big.Int {
+func GetIntTrimmedPercentageOfValue(value *big.Int, percentage float64) (*big.Int, error) {
 	x := big.NewInt(0).Set(value)
 	percentageString := strconv.FormatFloat(percentage, 'f', -1, 64)
 	exp, fra := splitExponentFraction(percentageString)
 	concatExpFra := exp + fra
-	concatBigInt, _ := big.NewInt(0).SetString(concatExpFra, 10)
-	intMultiplier, _ := big.NewInt(0).SetString("1"+strings.Repeat("0", len(fra)), 10)
+	concatBigInt, ok := big.NewInt(0).SetString(concatExpFra, 10)
+	if !ok {
+		return nil, ErrInvalidPercentageValue
+	}
+	intMultiplier, ok := big.NewInt(0).SetString("1"+strings.Repeat("0", len(fra)), 10)
+	if !ok {
+		return nil, ErrInvalidPercentageValue
+	}
 	x.Mul(x, concatBigInt)
 	x.Div(x, intMultiplier)
-	return x
+	return x, nil
 }
 
 // IsInRangeInclusive returns true if the provided value is in the given range, including the provided min and max values

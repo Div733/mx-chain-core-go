@@ -1,13 +1,21 @@
 package core
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+type failingEntropyReader struct{}
+
+func (failingEntropyReader) Read(_ []byte) (int, error) {
+	return 0, errors.New("entropy unavailable")
+}
 
 func TestEmptyChannelShouldWorkOnBufferedChannel(t *testing.T) {
 	ch := make(chan bool, 10)
@@ -68,7 +76,21 @@ func TestEmptyChannelShouldWorkOnNotBufferedChannel(t *testing.T) {
 	assert.Equal(t, int32(numConcurrentWrites), atomic.LoadInt32(&readsCnt))
 }
 
+func TestUniqueIdentifier_ShouldReturnErrorOnEntropyFailure(t *testing.T) {
+	_, err := uniqueIdentifierFromReader(failingEntropyReader{})
+	require.Error(t, err)
+}
+
+func TestUniqueIdentifier_ShouldReturn32Bytes(t *testing.T) {
+	identifier, err := UniqueIdentifier()
+
+	require.NoError(t, err)
+	require.Len(t, identifier, 32)
+}
+
 func TestGetPBFTThreshold_ShouldWork(t *testing.T) {
+	assert.Equal(t, 0, GetPBFTThreshold(0))
+	assert.Equal(t, 0, GetPBFTThreshold(-1))
 	assert.Equal(t, 2, GetPBFTThreshold(2))
 	assert.Equal(t, 3, GetPBFTThreshold(3))
 	assert.Equal(t, 3, GetPBFTThreshold(4))
@@ -78,6 +100,8 @@ func TestGetPBFTThreshold_ShouldWork(t *testing.T) {
 }
 
 func TestGetPBFTFallbackThreshold_ShouldWork(t *testing.T) {
+	assert.Equal(t, 0, GetPBFTFallbackThreshold(0))
+	assert.Equal(t, 0, GetPBFTFallbackThreshold(-1))
 	assert.Equal(t, 2, GetPBFTFallbackThreshold(2))
 	assert.Equal(t, 2, GetPBFTFallbackThreshold(3))
 	assert.Equal(t, 3, GetPBFTFallbackThreshold(4))

@@ -39,8 +39,8 @@ func (scu *sizeCheckUnmarshalizer) Unmarshal(obj interface{}, buff []byte) error
 		objSize = result.Size()
 	}
 
-	maxSize := objSize + objSize*int(scu.acceptedDelta)/100
-	if len(buff) > maxSize {
+	maxSize := int64(objSize) + int64(objSize)*int64(scu.acceptedDelta)/100
+	if int64(len(buff)) > maxSize {
 		return ErrUnmarshallingBadSize
 	}
 	return nil

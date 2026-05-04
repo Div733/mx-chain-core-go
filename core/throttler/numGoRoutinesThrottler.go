@@ -25,14 +25,26 @@ func NewNumGoRoutinesThrottler(max int32) (*NumGoRoutinesThrottler, error) {
 
 // CanProcess returns true if current counter is less than max
 func (ngrt *NumGoRoutinesThrottler) CanProcess() bool {
-	valCounter := atomic.LoadInt32(&ngrt.counter)
-
-	return valCounter < ngrt.max
+	return atomic.LoadInt32(&ngrt.counter) < ngrt.max
 }
 
 // StartProcessing will increment current counter
 func (ngrt *NumGoRoutinesThrottler) StartProcessing() {
 	atomic.AddInt32(&ngrt.counter, 1)
+}
+
+// TryStartProcessing atomically checks and increments the counter only if below max.
+// Returns true if processing was started, false if the limit is already reached.
+func (ngrt *NumGoRoutinesThrottler) TryStartProcessing() bool {
+	for {
+		current := atomic.LoadInt32(&ngrt.counter)
+		if current >= ngrt.max {
+			return false
+		}
+		if atomic.CompareAndSwapInt32(&ngrt.counter, current, current+1) {
+			return true
+		}
+	}
 }
 
 // EndProcessing will decrement current counter

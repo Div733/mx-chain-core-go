@@ -78,9 +78,13 @@ func (tx *Transaction) GetDataForSigning(encoder data.Encoder, marshaller data.M
 		return nil, err
 	}
 
+	valueStr := "0"
+	if tx.Value != nil {
+		valueStr = tx.Value.String()
+	}
 	ftx := &FrontendTransaction{
 		Nonce:            tx.Nonce,
-		Value:            tx.Value.String(),
+		Value:            valueStr,
 		Receiver:         receiverAddr,
 		Sender:           senderAddr,
 		GasPrice:         tx.GasPrice,

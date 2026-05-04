@@ -46,12 +46,15 @@ func (counts *ConcurrentShardedCounts) GetTotal() int64 {
 func (counts *ConcurrentShardedCounts) String() string {
 	var builder strings.Builder
 
-	_, _ = fmt.Fprintf(&builder, "Total:%d; ", counts.GetTotal())
-
 	counts.mutex.RLock()
 	defer counts.mutex.RUnlock()
 
-	// First, we sort the keys alphanumerically
+	total := int64(0)
+	for _, count := range counts.byShard {
+		total += count
+	}
+	_, _ = fmt.Fprintf(&builder, "Total:%d; ", total)
+
 	keys := make([]string, 0, len(counts.byShard))
 	for key := range counts.byShard {
 		keys = append(keys, key)

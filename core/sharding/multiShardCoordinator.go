@@ -39,6 +39,9 @@ func NewMultiShardCoordinator(numberOfShards, selfId uint32) (*multiShardCoordin
 // of a bitwise AND operation of an address with this mask will result in the
 // shard id where a transaction from that address will be dispatched
 func calculateMasks(numOfShards uint32) (uint32, uint32) {
+	if numOfShards == 1 {
+		return 0, 0
+	}
 	n := math.Ceil(math.Log2(float64(numOfShards)))
 	return (1 << uint(n)) - 1, (1 << uint(n-1)) - 1
 }

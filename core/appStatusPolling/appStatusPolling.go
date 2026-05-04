@@ -18,6 +18,7 @@ type AppStatusPolling struct {
 	registeredFunctions []func(appStatusHandler core.AppStatusHandler)
 	appStatusHandler    core.AppStatusHandler
 	log                 core.Logger
+	wg                  sync.WaitGroup
 }
 
 // NewAppStatusPolling will return an instance of AppStatusPolling
@@ -51,7 +52,9 @@ func (asp *AppStatusPolling) RegisterPollingFunc(handler func(appStatusHandler c
 
 // Poll will notify the AppStatusHandler at a given time
 func (asp *AppStatusPolling) Poll(ctx context.Context) {
+	asp.wg.Add(1)
 	go func() {
+		defer asp.wg.Done()
 		for {
 			select {
 			case <-ctx.Done():
@@ -67,4 +70,9 @@ func (asp *AppStatusPolling) Poll(ctx context.Context) {
 			asp.mutRegisteredFunc.RUnlock()
 		}
 	}()
+}
+
+// Close waits for the polling goroutine to finish
+func (asp *AppStatusPolling) Close() {
+	asp.wg.Wait()
 }

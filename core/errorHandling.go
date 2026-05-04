@@ -24,9 +24,7 @@ func IsClosingError(err error) bool {
 		return false
 	}
 
-	errString := err.Error()
-	return strings.Contains(errString, ErrDBIsClosed.Error()) ||
-		strings.Contains(errString, ErrContextClosing.Error())
+	return errors.Is(err, ErrDBIsClosed) || errors.Is(err, ErrContextClosing)
 }
 
 // UnwrapGetNodeFromDBErr unwraps the provided error until it finds a GetNodeFromDbErrHandler

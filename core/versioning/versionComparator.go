@@ -40,6 +40,11 @@ func (vc *versionComparator) splitVersionComponents(version string) (string, str
 			len(components),
 		)
 	}
+	for _, c := range components {
+		if c == "" {
+			return "", "", "", fmt.Errorf("%w, empty component in version string", core.ErrVersionNumComponents)
+		}
+	}
 
 	return components[0], components[1], components[2], nil
 }

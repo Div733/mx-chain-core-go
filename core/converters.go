@@ -170,6 +170,9 @@ func ConvertToEvenHex(value int) string {
 
 // ConvertToEvenHexBigInt converts the provided value in a hex string, even number of characters
 func ConvertToEvenHexBigInt(value *big.Int) string {
+	if value == nil {
+		return "00"
+	}
 	str := value.Text(16)
 	if len(str)%2 != 0 {
 		str = "0" + str

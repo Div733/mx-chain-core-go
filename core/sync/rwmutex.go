@@ -1,12 +1,15 @@
 package sync
 
-import "sync"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 // rwMutex is a mutex that can be used to lock/unlock a resource
 // this component is not concurrent safe, concurrent accesses need to be managed by the caller
 type rwMutex struct {
-	cntLocks  int32
-	cntRLocks int32
+	cntLocks  atomic.Int32
+	cntRLocks atomic.Int32
 
 	controlMut sync.RWMutex
 }
@@ -17,19 +20,19 @@ func newRWMutex() *rwMutex {
 }
 
 func (rm *rwMutex) updateCounterLock() {
-	rm.cntLocks++
+	rm.cntLocks.Add(1)
 }
 
 func (rm *rwMutex) updateCounterRLock() {
-	rm.cntRLocks++
+	rm.cntRLocks.Add(1)
 }
 
 func (rm *rwMutex) updateCounterUnlock() {
-	rm.cntLocks--
+	rm.cntLocks.Add(-1)
 }
 
 func (rm *rwMutex) updateCounterRUnlock() {
-	rm.cntRLocks--
+	rm.cntRLocks.Add(-1)
 }
 
 // lock locks the rwMutex
@@ -54,8 +57,5 @@ func (rm *rwMutex) rUnlock() {
 
 // numLocks returns the number of locks on the rwMutex
 func (rm *rwMutex) numLocks() int32 {
-	cntLocks := rm.cntLocks
-	cntRLocks := rm.cntRLocks
-
-	return cntLocks + cntRLocks
+	return rm.cntLocks.Load() + rm.cntRLocks.Load()
 }

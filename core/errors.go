@@ -121,3 +121,9 @@ var ErrNilEnableEpochsHandler = errors.New("nil enable epochs handler")
 
 // ErrInvalidEnableEpochsHandler signals that an invalid enable epochs handler has been provided
 var ErrInvalidEnableEpochsHandler = errors.New("invalid enable epochs handler")
+
+// ErrConfigFileTooBig signals that the config file exceeds the maximum allowed size
+var ErrConfigFileTooBig = errors.New("config file exceeds maximum allowed size")
+
+// ErrInvalidPercentageValue signals that an invalid percentage value was provided
+var ErrInvalidPercentageValue = errors.New("invalid percentage value")

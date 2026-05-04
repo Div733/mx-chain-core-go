@@ -28,8 +28,9 @@ func (hq *sliceQueue) Add(data []byte) []byte {
 
 	if uint(len(hq.queue)) == hq.size {
 		dataToEvict := hq.queue[0]
-		hq.queue = hq.queue[1:]
-		hq.queue = append(hq.queue, data)
+		newQueue := make([][]byte, len(hq.queue)-1)
+		copy(newQueue, hq.queue[1:])
+		hq.queue = append(newQueue, data)
 
 		return dataToEvict
 	}

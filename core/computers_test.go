@@ -332,7 +332,8 @@ func TestGetPercentageNoLoss(t *testing.T) {
 
 	bigA, _ := big.NewInt(0).SetString(a, 10)
 	bigExpected, _ := big.NewInt(0).SetString(expected, 10)
-	result := core.GetIntTrimmedPercentageOfValue(bigA, percentage)
+	result, err := core.GetIntTrimmedPercentageOfValue(bigA, percentage)
+	require.NoError(t, err)
 	require.Equal(t, bigExpected, result)
 
 	a = "29815853976407917651"
@@ -340,7 +341,8 @@ func TestGetPercentageNoLoss(t *testing.T) {
 	expected = "298158539764079176"
 	bigA, _ = big.NewInt(0).SetString(a, 10)
 	bigExpected, _ = big.NewInt(0).SetString(expected, 10)
-	result = core.GetIntTrimmedPercentageOfValue(bigA, percentage)
+	result, err = core.GetIntTrimmedPercentageOfValue(bigA, percentage)
+	require.NoError(t, err)
 	require.Equal(t, bigExpected, result)
 
 	a = "29815853976407917651"
@@ -348,7 +350,8 @@ func TestGetPercentageNoLoss(t *testing.T) {
 	expected = "2981585397"
 	bigA, _ = big.NewInt(0).SetString(a, 10)
 	bigExpected, _ = big.NewInt(0).SetString(expected, 10)
-	result = core.GetIntTrimmedPercentageOfValue(bigA, percentage)
+	result, err = core.GetIntTrimmedPercentageOfValue(bigA, percentage)
+	require.NoError(t, err)
 	require.Equal(t, bigExpected, result)
 }
 
@@ -433,7 +436,7 @@ func BenchmarkGetIntTrimmedPercentageOfValue(b *testing.B) {
 	}
 
 	for n := 0; n < b.N; n++ {
-		core.GetIntTrimmedPercentageOfValue(preparedBigInts[n%nbPrepared], preparedFractionals[n%nbPrepared])
+		core.GetIntTrimmedPercentageOfValue(preparedBigInts[n%nbPrepared], preparedFractionals[n%nbPrepared]) //nolint:errcheck
 	}
 }
 

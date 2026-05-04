@@ -11,8 +11,8 @@ func TestNewRWMutex(t *testing.T) {
 
 	rwm := newRWMutex()
 	require.NotNil(t, rwm)
-	require.Equal(t, int32(0), rwm.cntLocks)
-	require.Equal(t, int32(0), rwm.cntRLocks)
+	require.Equal(t, int32(0), rwm.cntLocks.Load())
+	require.Equal(t, int32(0), rwm.cntRLocks.Load())
 }
 
 func TestRWMutex_Lock_Unlock_IsLocked_NumLocks(t *testing.T) {

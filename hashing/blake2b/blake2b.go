@@ -26,6 +26,12 @@ func NewBlake2bWithSize(hashSize int) (*blake2b, error) {
 	h := &blake2b{
 		customHashSize: hashSize,
 	}
+
+	// validate the hash size is accepted by the underlying library
+	if _, err := blake2bLib.New(hashSize, nil); err != nil {
+		return nil, ErrInvalidHashSize
+	}
+
 	h.emptyHash = h.computeEmptyHash()
 
 	return h, nil

@@ -40,7 +40,7 @@ func NewAlarmScheduler() *alarmScheduler {
 	as := &alarmScheduler{
 		cancelFunc:      nil,
 		scheduledAlarms: make(map[string]*alarmItem),
-		event:           make(chan alarmEvent),
+		event:           make(chan alarmEvent, 4),
 	}
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	as.cancelFunc = cancelFunc
@@ -69,14 +69,6 @@ func (as *alarmScheduler) Add(callback func(alarmID string), duration time.Durat
 
 // Cancel cancels a scheduled alarm
 func (as *alarmScheduler) Cancel(alarmID string) {
-	as.mutScheduledAlarms.RLock()
-	_, ok := as.scheduledAlarms[alarmID]
-	as.mutScheduledAlarms.RUnlock()
-
-	if !ok {
-		return
-	}
-
 	evt := alarmEvent{
 		alarmID: alarmID,
 		alarm:   nil,
