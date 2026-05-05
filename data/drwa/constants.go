@@ -48,6 +48,7 @@ var knownStoragePrefixes = map[StorageKeyPrefix]struct{}{
 	HolderProfilePrefix:     {},
 	HolderAuditorAuthPrefix: {},
 	AssetRecordPrefix:       {},
+	ActiveMarkerPrefix:      {},
 }
 
 // AllDenialCodes returns the canonical concrete DRWA denial codes in stable
@@ -120,6 +121,11 @@ const (
 	HolderProfilePrefix     StorageKeyPrefix = "drwa:profile:"
 	HolderAuditorAuthPrefix StorageKeyPrefix = "drwa:auditor:"
 	AssetRecordPrefix       StorageKeyPrefix = "drwa:asset:"
+	// ActiveMarkerPrefix is written to the system account when a token is first
+	// registered as DRWA-regulated. It persists even if the token policy is later
+	// deleted or corrupted, preventing compliance escape — a token that was once
+	// regulated cannot silently become unregulated by losing its policy entry.
+	ActiveMarkerPrefix StorageKeyPrefix = "drwa:active:"
 )
 
 // AllStorageKeyPrefixes returns the complete DRWA storage prefix set in stable order.
@@ -130,6 +136,7 @@ func AllStorageKeyPrefixes() []StorageKeyPrefix {
 		HolderProfilePrefix,
 		HolderAuditorAuthPrefix,
 		AssetRecordPrefix,
+		ActiveMarkerPrefix,
 	}
 }
 

@@ -17,4 +17,14 @@ const (
 	TopicFinalizedBlock = "FinalizedBlock"
 	// TopicSettings is the topic that triggers the sending of node settings
 	TopicSettings = "Settings"
+
+	// TopicDrwaGateDenial is the topic emitted when the DRWA gate blocks a transfer.
+	// Payload: DrwaGateDenialEvent (JSON). Consumers: indexer, compliance dashboard, notifier.
+	TopicDrwaGateDenial = "DrwaGateDenial"
+	// TopicDrwaPolicyUpdate is the topic emitted when a token policy is written to the native mirror.
+	// Payload: DrwaPolicyUpdateEvent (JSON). Consumers: indexer, SDK cache invalidation.
+	TopicDrwaPolicyUpdate = "DrwaPolicyUpdate"
+	// TopicDrwaHolderUpdate is the topic emitted when a holder mirror or profile is written to the native mirror.
+	// Payload: DrwaHolderUpdateEvent (JSON). Consumers: indexer, compliance dashboard.
+	TopicDrwaHolderUpdate = "DrwaHolderUpdate"
 )
