@@ -102,10 +102,13 @@ func SortTransactionsBySenderAndNonceExtendedTransactions(transactions []data.Tx
 	sort.Slice(transactions, sorter)
 }
 
-// parameters need to be of the same len, otherwise it will panic (if second slice shorter)
 func xorBytes(a, b []byte) []byte {
-	res := make([]byte, len(a))
-	for i := range a {
+	length := len(a)
+	if len(b) < length {
+		length = len(b)
+	}
+	res := make([]byte, length)
+	for i := 0; i < length; i++ {
 		res[i] = a[i] ^ b[i]
 	}
 	return res

@@ -225,6 +225,42 @@ func TestLoadSkPkFromPemFile(t *testing.T) {
 		assert.Empty(t, dataPk)
 		assert.True(t, errors.Is(err, core.ErrPemFileIsInvalid))
 	})
+	t.Run("empty public key suffix should error", func(t *testing.T) {
+		t.Parallel()
+
+		fileName := filepath.Join(t.TempDir(), "testFile")
+		file, err := os.Create(fileName)
+		assert.Nil(t, err)
+
+		_, _ = file.WriteString("-----BEGIN PRIVATE KEY for -----\n")
+		_, _ = file.WriteString("ChQeKDI8\n")
+		_, _ = file.WriteString("-----END PRIVATE KEY for -----")
+		_ = file.Close()
+
+		dataSk, dataPk, err := core.LoadSkPkFromPemFile(fileName, 0)
+
+		assert.Nil(t, dataSk)
+		assert.Empty(t, dataPk)
+		assert.True(t, errors.Is(err, core.ErrPemFileIsInvalid))
+	})
+	t.Run("control character in public key suffix should error", func(t *testing.T) {
+		t.Parallel()
+
+		fileName := filepath.Join(t.TempDir(), "testFile")
+		file, err := os.Create(fileName)
+		assert.Nil(t, err)
+
+		_, _ = file.WriteString("-----BEGIN PRIVATE KEY for ABCD\t-----\n")
+		_, _ = file.WriteString("ChQeKDI8\n")
+		_, _ = file.WriteString("-----END PRIVATE KEY for ABCD\t-----")
+		_ = file.Close()
+
+		dataSk, dataPk, err := core.LoadSkPkFromPemFile(fileName, 0)
+
+		assert.Nil(t, dataSk)
+		assert.Empty(t, dataPk)
+		assert.True(t, errors.Is(err, core.ErrPemFileIsInvalid))
+	})
 	t.Run("invalid index should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -321,6 +357,42 @@ func TestLoadAllKeysFromPemFile(t *testing.T) {
 		assert.Empty(t, publicKeys)
 		assert.True(t, errors.Is(err, core.ErrPemFileIsInvalid))
 	})
+	t.Run("empty public key suffix should error", func(t *testing.T) {
+		t.Parallel()
+
+		fileName := filepath.Join(t.TempDir(), "testFile")
+		file, err := os.Create(fileName)
+		assert.Nil(t, err)
+
+		_, _ = file.WriteString("-----BEGIN PRIVATE KEY for -----\n")
+		_, _ = file.WriteString("ChQeKDI8\n")
+		_, _ = file.WriteString("-----END PRIVATE KEY for -----")
+		_ = file.Close()
+
+		privateKeys, publicKeys, err := core.LoadAllKeysFromPemFile(fileName)
+
+		assert.Nil(t, privateKeys)
+		assert.Empty(t, publicKeys)
+		assert.True(t, errors.Is(err, core.ErrPemFileIsInvalid))
+	})
+	t.Run("control character in public key suffix should error", func(t *testing.T) {
+		t.Parallel()
+
+		fileName := filepath.Join(t.TempDir(), "testFile")
+		file, err := os.Create(fileName)
+		assert.Nil(t, err)
+
+		_, _ = file.WriteString("-----BEGIN PRIVATE KEY for ABCD\t-----\n")
+		_, _ = file.WriteString("ChQeKDI8\n")
+		_, _ = file.WriteString("-----END PRIVATE KEY for ABCD\t-----")
+		_ = file.Close()
+
+		privateKeys, publicKeys, err := core.LoadAllKeysFromPemFile(fileName)
+
+		assert.Nil(t, privateKeys)
+		assert.Empty(t, publicKeys)
+		assert.True(t, errors.Is(err, core.ErrPemFileIsInvalid))
+	})
 	t.Run("should work with one key", func(t *testing.T) {
 		t.Parallel()
 
@@ -401,13 +473,28 @@ func TestSaveSkToPemFile(t *testing.T) {
 		err = core.SaveSkToPemFile(file, "data", skBytes)
 		assert.Nil(t, err)
 	})
+	t.Run("invalid identifier should error", func(t *testing.T) {
+		t.Parallel()
+
+		fileName := filepath.Join(t.TempDir(), "testFile")
+		file, err := os.Create(fileName)
+		assert.Nil(t, err)
+		defer func() {
+			_ = file.Close()
+		}()
+
+		err = core.SaveSkToPemFile(file, " bad ", []byte{10, 20, 30})
+		assert.ErrorIs(t, err, core.ErrPemFileIsInvalid)
+	})
 }
 
 func TestCreateFile(t *testing.T) {
 	t.Parallel()
 
+	tempDir := t.TempDir()
+	targetDir := filepath.Join(tempDir, "subdir")
 	arg := core.ArgCreateFileArgument{
-		Directory:     "subdir",
+		Directory:     targetDir,
 		Prefix:        "prefix",
 		FileExtension: "extension",
 	}
@@ -418,8 +505,7 @@ func TestCreateFile(t *testing.T) {
 
 	assert.True(t, strings.Contains(file.Name(), arg.Prefix))
 	assert.True(t, strings.Contains(file.Name(), arg.FileExtension))
-	if _, errF := os.Stat(file.Name()); errF == nil {
-		_ = os.Remove(file.Name())
-		_ = os.Remove(arg.Directory)
-	}
+	dirInfo, err := os.Stat(targetDir)
+	assert.Nil(t, err)
+	assert.Equal(t, os.FileMode(0700), dirInfo.Mode().Perm())
 }

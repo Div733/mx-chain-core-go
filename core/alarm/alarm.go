@@ -69,14 +69,6 @@ func (as *alarmScheduler) Add(callback func(alarmID string), duration time.Durat
 
 // Cancel cancels a scheduled alarm
 func (as *alarmScheduler) Cancel(alarmID string) {
-	as.mutScheduledAlarms.RLock()
-	_, ok := as.scheduledAlarms[alarmID]
-	as.mutScheduledAlarms.RUnlock()
-
-	if !ok {
-		return
-	}
-
 	evt := alarmEvent{
 		alarmID: alarmID,
 		alarm:   nil,
